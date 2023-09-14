@@ -3,6 +3,9 @@ import pandas as pd
 import json
 from datetime import datetime
 import s3fs 
+import boto3
+from io import StringIO
+
 
 def run_twitter_etl():
 
@@ -40,4 +43,26 @@ def run_twitter_etl():
         list.append(refined_tweet)
 
     df = pd.DataFrame(list)
-    df.to_csv('refined_tweets.csv')
+    
+    # Replace these with your AWS credentials and S3 bucket information
+    aws_access_key_id = 'YOUR_ACCESS_KEY_ID'
+    aws_secret_access_key = 'YOUR_SECRET_ACCESS_KEY'
+    bucket_name = 'YOUR_BUCKET_NAME'
+    file_name = 'elon_musk_tweets.csv'  # Name for the file in S3
+    
+    # Convert the DataFrame to CSV format as a string
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    csv_content = csv_buffer.getvalue()
+
+    # Create a Boto3 S3 client
+    s3_client = boto3.client('s3',
+                            aws_access_key_id=aws_access_key_id,
+                            aws_secret_access_key=aws_secret_access_key)
+
+    # Upload the CSV content to S3
+    s3_client.put_object(Bucket=bucket_name, Key=file_name, Body=csv_content)
+
+    print(f'DataFrame saved to S3 bucket: {bucket_name}/{file_name}')
+
+
